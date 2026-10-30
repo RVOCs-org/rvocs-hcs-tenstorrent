@@ -34,7 +34,7 @@ RVOCs 的 **Tenstorrent 厂商仓库**（`rvocs-hcs-{vendor}` 命名）。单分
 ../rvocs-main/rvocs.sh --target tt-stack  --deploy --yes
 ```
 
-宿主机 `.deb` 包发布在 [Releases](https://gitee.com/rvocs/rvocs-hcs-tenstorrent/releases)；
+宿主机 `.deb` 包通过 `--download` / `--install` 获取（资产暂托管在 Gitee Releases，迁移到 GitHub 后链接同步切换）；
 镜像发布在华为云 SWR（`swr.cn-east-3.myhuaweicloud.com/cloud-mdgx/`）。
 
 ## 基线切换

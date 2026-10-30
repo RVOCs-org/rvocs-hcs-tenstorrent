@@ -7,7 +7,7 @@ Tenstorrent 宿主机依赖环境的**一键构建 + 单一交付包**：内核�
 
 产物命名：`rvocs-tt-deps_<version>_<debarch>.tar.zst` / `.deb`
 （如 `rvocs-tt-deps_v0.1.0_riscv64.deb`），`<version>` 来自仓库根的 `VERSION`。
-`.deb` 发布在 [Releases](https://gitee.com/rvocs/rvocs-hcs-tenstorrent/releases)。
+`.deb` 通过 `./rvocs.sh --target tt-host --arch <arch> --download` 获取（资产暂托管在 Gitee Releases，迁移到 GitHub Releases 后链接同步切换）。
 
 > 推理镜像在同仓库的 [`../stack/`](../stack/)，本部分只负责宿主机。
 
