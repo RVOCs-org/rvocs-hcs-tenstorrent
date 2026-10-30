@@ -1,0 +1,12 @@
+# per-part build workspaces and artifacts (contents are never committed)
+/host/work/
+/host/dist/
+/stack/work/
+/stack/dist/
+*.log
+.patch-state/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store

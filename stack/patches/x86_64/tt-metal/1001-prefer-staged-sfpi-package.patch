@@ -1,0 +1,20 @@
+diff --git a/tt_metal/hw/CMakeLists.txt b/tt_metal/hw/CMakeLists.txt
+index 09d8a1ef518..957e2810b85 100644
+--- a/tt_metal/hw/CMakeLists.txt
++++ b/tt_metal/hw/CMakeLists.txt
+@@ -60,6 +60,15 @@ set_property(
+ # this script sets a bunch of variables of the form SFPI_snake_case_name
+ include(${SFPI_BASE}/sfpi-version.cmake)
+ 
++# Prefer a staged SFPI package: when the tarball is already present in runtime/
++# (offline builds stage the official one there), skip the download entirely.
++# Without this, arches that publish a package (x86_64/aarch64) always try to
++# fetch it over the network even though the file is right there.
++if(EXISTS "${SFPI_BASE}/${SFPI_filename}")
++    message(STATUS "Using staged SFPI package: ${SFPI_FILENAME}")
++    set(SFPI_hash "")
++endif()
++
+ if(TT_USE_SYSTEM_SFPI)
+     # we'll use the system's version
+     set(SFPI_BASE "/opt/tenstorrent")

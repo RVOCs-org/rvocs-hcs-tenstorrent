@@ -1,0 +1,12 @@
+diff --git a/tt_metal/impl/program/program_impl.hpp b/tt_metal/impl/program/program_impl.hpp
+index b052994d26c..6df982647f1 100644
+--- a/tt_metal/impl/program/program_impl.hpp
++++ b/tt_metal/impl/program/program_impl.hpp
+@@ -11,6 +11,7 @@
+ #include "tt-metalium/circular_buffer_constants.h"
+ #include "tt-metalium/circular_buffer_config.hpp"
+ #include <tt_stl/assert.hpp>
++#include "tt_metal/impl/dataflow_buffer/cross_node_dfb.hpp"
+ #include "tt-metalium/core_coord.hpp"
+ #include "tt-metalium/hal_types.hpp"       // HalProgrammableCoreType
+ #include "tt-metalium/kernel_types.hpp"    // KernelHandle

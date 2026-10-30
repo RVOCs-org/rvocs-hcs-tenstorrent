@@ -1,0 +1,8 @@
+# Applied in order with git apply; see docs/PORTING.md ("upgrading upstream") for fixing stale patches
+1001-add-riscv64-clang20-toolchain-file.patch
+1002-build-metal-use-riscv64-toolchain.patch
+1003-sfpi-prestaged-source-skip-dejagnu.patch
+1004-cpm-offline-bootstrap.patch
+1005-streaming-profiler-simde.patch
+1006-python-env-riscv64-deps.patch
+1007-create-venv-riscv64.patch

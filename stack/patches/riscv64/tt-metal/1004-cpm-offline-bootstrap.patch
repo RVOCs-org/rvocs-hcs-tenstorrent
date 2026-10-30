@@ -1,0 +1,29 @@
+diff --git a/cmake/CPM.cmake b/cmake/CPM.cmake
+index 116756d4..8840d495 100644
+--- a/cmake/CPM.cmake
++++ b/cmake/CPM.cmake
+@@ -17,11 +17,18 @@ set(CPM_DOWNLOAD_LOCATION "${CPM_SOURCE_CACHE}/cpm/CPM_${CPM_DOWNLOAD_VERSION}.c
+ # Expand relative path. This is important if the provided path contains a tilde (~)
+ get_filename_component(CPM_DOWNLOAD_LOCATION ${CPM_DOWNLOAD_LOCATION} ABSOLUTE)
+ 
+-file(
+-    DOWNLOAD
+-        https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
+-        ${CPM_DOWNLOAD_LOCATION}
+-    EXPECTED_HASH SHA256=${CPM_HASH_SUM}
+-)
++# riscv64: skip download when a pre-staged, hash-verified copy is present
++# (github.com HTTP downloads are blocked/slow on this network).
++if(EXISTS ${CPM_DOWNLOAD_LOCATION})
++    file(SHA256 ${CPM_DOWNLOAD_LOCATION} _cpm_staged_hash)
++endif()
++if(NOT _cpm_staged_hash STREQUAL ${CPM_HASH_SUM})
++    file(
++        DOWNLOAD
++            https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake
++            ${CPM_DOWNLOAD_LOCATION}
++        EXPECTED_HASH SHA256=${CPM_HASH_SUM}
++    )
++endif()
+ 
+ include(${CPM_DOWNLOAD_LOCATION})

@@ -1,0 +1,15 @@
+[Unit]
+Description=Tenstorrent 1G hugepage allocation (NUMA aware)
+Documentation=file:/opt/tenstorrent/bin/hugepages-setup.sh
+After=dev-hugepages\x2d1G.mount
+Wants=dev-hugepages\x2d1G.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/tenstorrent/bin/hugepages-setup.sh --apply
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

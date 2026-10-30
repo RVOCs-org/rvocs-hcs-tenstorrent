@@ -1,0 +1,98 @@
+# tt-dependency-installer version and target matrix
+#
+# Design rules:
+#   - Sources are NOT committed: 01-fetch.sh clones them from GitHub into work/src (gitignored)
+#   - Patches ARE committed: arch-specific fixes live in patches/<component>/series and are
+#     applied automatically after fetching
+#   - Artifacts are NOT committed: dist/ holds build output (gitignored) and is only for delivery
+version: 1
+
+bundle:
+  name: rvocs-tt-deps
+  version: v0.1.0            # repository version (VERSION); part of the artifact names
+  formats: [tar.zst, deb]     # both are produced by every build and install the same state
+  artifacts:                  # <debarch> is the Debian architecture: amd64 / arm64 / riscv64
+    - dist/rvocs-tt-deps_<version>_<debarch>.tar.zst
+    - dist/rvocs-tt-deps_<version>_<debarch>.deb
+
+sources:                       # fetched at build time (shallow clone to ref), never vendored
+  tt-kmd:
+    url: https://github.com/tenstorrent/tt-kmd.git
+    ref: ttkmd-2.11.0
+    commit: c05f22460985960905928cf48b3fbde602d9ea37
+    role: kernel driver (DKMS) providing /dev/tenstorrent
+  tt-umd:
+    url: https://github.com/tenstorrent/tt-umd.git
+    ref: v0.9.14
+    commit: 5ad28496501145212691ce3269a7d20bdb8d2ca8
+    # ref_by_arch:          # uncomment to pin per architecture (takes precedence over ref)
+    #   riscv64: v0.9.12
+    role: user space driver (nanobind python bindings)
+    note: |
+      The version actually fetched follows the tools' metadata: tt-smi/tt-flash depend on
+      pyluwen which pins tt-umd, and 01-fetch resolves it, switching to e.g. v0.9.12 when
+      required (see the "tt-umd adjusted to ..." line in the build log).
+  tt-smi:
+    url: https://github.com/tenstorrent/tt-smi.git
+    ref: v6.8.0
+    commit: e25a46520ab915db9ee823a652406b9f44ed8cdd
+  tt-flash:
+    url: https://github.com/tenstorrent/tt-flash.git
+    ref: v4.1.0
+    commit: 8c749673763950cde1cf453b6789ed08159edd79
+  tt-topology:
+    url: https://github.com/tenstorrent/tt-topology.git
+    ref: v1.2.20
+    commit: 7bd675f888f9f0d27674fab7cb4188d5b1255481
+
+patches:                       # patches listed in patches/<component>/series are applied after fetch
+  layout: patches/{common,<arch>}/<component>/series
+  applied_by: scripts/02-patch.sh
+  effect: |
+    When a component has patches, 03-wheels.sh builds its wheel from source (overriding the
+    PyPI wheel of the same version) so the patches reach the final artifact; tt-kmd patches
+    end up in the DKMS tarball and the prebuilt .ko.
+
+targets:
+  riscv64:
+    distros: ["26.04"]
+    kernels: ["7.0.0-38-generic", "7.0.0-31-generic"]   # only kernels with headers are prebuilt
+  x86_64:
+    distros: ["22.04", "24.04", "26.04"]
+    kernels: []
+
+python_matrix:
+  "22.04": "3.10"
+  "24.04": "3.12"
+  "26.04": "3.14"
+
+wheels:
+  strategy: |
+    One wheelhouse per target Python version, so installation needs no compiler:
+      - patched components      -> built from work/src (pip wheel)
+      - unpatched with a wheel  -> the PyPI wheel is used as is
+      - no wheel at all (tt-umd on cp314, pyluwen on riscv64) -> built from source
+    Known upstream conflict: tt-smi 6.8.0 and tt-flash 4.1.0 need pyluwen~=0.10.0 while
+    tt-topology 1.2.20 needs pyluwen~=0.8.5, so each tool gets its own environment.
+
+  # pyo3/abi3 extensions (pyluwen) are built in this image, see scripts/lib/abi3_wheels.sh
+  abi3_build_image:
+    riscv64: debian:13          # trixie: rustc/cargo 1.85.1, host=riscv64gc-unknown-linux-gnu, glibc 2.41
+  min_glibc: "2.41"             # lowest glibc of the abi3 wheels, so they serve 26.04 and later only
+  abi3_notes: |
+    Why not ubuntu:26.04: its rustc reports host=riscv64a23-unknown-linux-gnu, which
+      target-lexicon 0.12 cannot parse, so the pyluwen build panics
+      ("Invalid target name: 'riscv64a23-unknown-linux-gnu'").
+    Why not ubuntu:24.04: standard host triple, but cargo 1.75 is too old
+      (maturin needs edition2024, Rust >= 1.85).
+    Debian 13 satisfies both: cargo 1.85.1, standard triple, supported until ~2030.
+    abi3 wheels are independent of the build interpreter's minor version, so the 3.14
+    interpreter on 26.04 installs them directly.
+
+compat:
+  notes: |
+    - The image repo ships tt-umd 0.9.10+13 whose KMD_MINIMUM_VERSION=2.0.0 with no upper
+      bound, so tt-kmd 2.11.x is compatible (verified: tt-smi 6.8.0 + TT-KMD 2.11.0 on real
+      Wormhole hardware).
+    - tt-flash firmware bundles only validate the board, not the tt-metal version, so
+      install.sh does not flash firmware by default.

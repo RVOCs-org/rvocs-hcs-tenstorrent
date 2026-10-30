@@ -1,0 +1,13 @@
+diff --git a/build_metal.sh b/build_metal.sh
+index a59d0104..5e33b740 100755
+--- a/build_metal.sh
++++ b/build_metal.sh
+@@ -96,7 +96,7 @@ cpm_source_cache=""
+ c_compiler_path=""
+ ttnn_shared_sub_libs="OFF"
+ use_system_sfpi="OFF"
+-toolchain_path="cmake/x86_64-linux-clang-20-libstdcpp-toolchain.cmake"
++toolchain_path="cmake/riscv64-linux-clang-20-libstdcpp-toolchain.cmake"
+ host_march="x86-64-v3"
+ 
+ 

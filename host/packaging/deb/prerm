@@ -1,0 +1,16 @@
+#!/bin/sh
+# tt-deps prerm: remove the driver, tools, systemd units and udev rules
+# dpkg only removes packaged files (/opt/tt-deps); uninstall.sh cleans up the rest.
+#       Failures are tolerated here so that 'apt remove' never gets stuck.
+set -e
+
+case "$1" in
+    remove|deconfigure)
+        if [ -x /opt/tt-deps/uninstall.sh ]; then
+            echo "[tt-deps] removing the driver, tools and hugepage configuration ..."
+            /opt/tt-deps/uninstall.sh || echo "[tt-deps] uninstall.sh reported warnings (continuing)" >&2
+        fi
+        ;;
+esac
+
+exit 0

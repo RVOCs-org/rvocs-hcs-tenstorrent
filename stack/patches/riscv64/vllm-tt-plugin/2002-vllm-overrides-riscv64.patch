@@ -1,0 +1,24 @@
+diff --git a/docs/vllm-overrides.txt b/docs/vllm-overrides.txt
+index 28dfef1..538c962 100644
+--- a/docs/vllm-overrides.txt
++++ b/docs/vllm-overrides.txt
+@@ -14,8 +14,7 @@
+ # floor again), or if a TT-supported model gains video input, or if tt-metal
+ # bumps the numpy requirement
+ # (https://github.com/tenstorrent/tt-metal/issues/30193).
+-opencv-python-headless==4.11.0.86
+-numpy>=1.24.4,<2
++numpy>=2.4
+ 
+ # Retarget this ceiling when the pinned vLLM moves; do not just delete it. common.txt
+ # declares no upper bound, so an uncapped install resolves the newest transformers
+@@ -27,3 +26,9 @@ numpy>=1.24.4,<2
+ # release is validated. The floor restates vLLM's own: --override replaces a
+ # requirement instead of intersecting it.
+ transformers>=5.10.4,<5.15.0
++
++# riscv64: opencv-python-headless has no riscv64 wheel and its sdist build is prohibitive.
++# It is pulled in transitively by mistral-common and reached only by vLLM's lazy
++# video-IO path (vllm/multimodal/video.py), which is guarded by PlaceholderModule.
++# An always-false marker removes it from the resolution.
++opencv-python-headless ; python_version < "3"

@@ -1,0 +1,5 @@
+49cbd71a0e419e051ac773498b9802c5b3046be50e1a537072f235390aa8e6e4  matplotlib-3.11.1-cp312-cp312-manylinux_2_39_riscv64.whl
+84cc2ae98cda7b57da0c25b8a2ae278f7fcf1b51a6fcbbd8854ce64932567147  numpy-2.5.3-cp312-cp312-manylinux_2_38_riscv64.manylinux_2_39_riscv64.whl
+ecf354c0d41ef695a5130d66dc867cd8e70beb22478dbe25671d0db5ceaf1694  pandas-2.3.3-cp312-cp312-manylinux_2_34_riscv64.manylinux_2_39_riscv64.whl
+c2d5c05a7116a7b9ed490fd5b841a5e8efe2e212b41151a99b24ba842891ffac  pillow-12.3.0-cp312-cp312-manylinux_2_38_riscv64.manylinux_2_39_riscv64.whl
+23da9af03ed3d293814721f0e9fdf50d5f49d1c4dfd922c6b547829d78783c12  torch-2.14.0+cpu-cp312-cp312-manylinux_2_39_riscv64.whl

@@ -1,0 +1,21 @@
+# build workspace (never committed)
+work/
+# logs
+*.log
+logs/
+# local environment
+.env
+*.local
+# Python
+__pycache__/
+*.pyc
+.venv/
+# editors
+.idea/
+.vscode/
+
+# SFPI packages that 01-fetch downloads from the official releases are not committed;
+# only the locally built riscv64 one (expensive to rebuild) lives in the repo.
+assets/*/sfpi-prebuilt/*x86_64*.txz
+assets/*/sfpi-prebuilt/*aarch64*.txz
+assets/sfpi-prebuilt/*x86_64*.txz

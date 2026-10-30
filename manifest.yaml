@@ -1,0 +1,32 @@
+# Tenstorrent vendor repository manifest (summary)
+#
+# One repository per vendor, split into two independently usable parts. Each
+# part owns its manifest with the authoritative pins:
+#   host/manifest.yaml    sources (tt-kmd, tt-umd, tt-smi, tt-flash, tt-topology)
+#   stack/manifest.yaml   upstream submodules (tt-inference-server, tt-metal, ...)
+#
+# Single branch (master): architecture differences live in each part's
+# patches/{common,riscv64,x86_64}/ layer, not in branches.
+version: 1
+
+project:
+  name: tenstorrent
+  version: v0.1.0            # repository VERSION; part versions currently match
+  layout:
+    host:  host dependency packages (rvocs-tt-deps_<version>_<debarch>.deb)
+    stack: vLLM inference image (rvocs-vllm-tt-<arch>:<version>)
+
+artifacts:
+  - rvocs-vllm-tt-riscv64:v0.1.0          # built by stack/, published to SWR
+  - rvocs-vllm-tt-amd64:v0.1.0
+  - rvocs-tt-deps_v0.1.0_riscv64.deb      # built by host/, published to the Gitee release
+  - rvocs-tt-deps_v0.1.0_amd64.deb
+
+entry: scripts/build.sh --part host|stack|all
+
+history: |
+  host/ was merged from the former tt-installer repository (tt-dependency-installer,
+  now the tt-host target);
+  its commit history is preserved as a merge parent. The RISCV-Porting branch of the
+  former image repository was folded into master; arch-specific changes now live in
+  stack/patches/riscv64/.

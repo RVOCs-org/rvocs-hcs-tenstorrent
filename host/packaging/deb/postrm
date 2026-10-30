@@ -1,0 +1,17 @@
+#!/bin/sh
+# tt-deps postrm: clean up leftovers; 'purge' also drops the configuration
+set -e
+
+case "$1" in
+    remove|purge)
+        rm -rf /opt/tt-deps
+        ;;
+esac
+
+case "$1" in
+    purge)
+        rm -rf /etc/tenstorrent
+        ;;
+esac
+
+exit 0

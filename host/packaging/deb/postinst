@@ -1,0 +1,19 @@
+#!/bin/sh
+# tt-deps postinst: run the installer bundled in the package (same logic as the tar bundle)
+set -e
+
+echo "[tt-deps] starting the installation (driver / tools / 1G hugepages / udev) ..."
+if ! /opt/tt-deps/install.sh --yes --no-apt; then
+    echo "[tt-deps] the installer failed; run /opt/tt-deps/verify.sh for details" >&2
+    exit 1
+fi
+
+# Note: /usr/local/bin precedes /usr/bin, so our version shadows any apt-installed tool
+for t in tt-smi tt-flash tt-topology; do
+    if [ -e "/usr/bin/$t" ]; then
+        echo "[tt-deps] note: /usr/local/bin/$t takes precedence over /usr/bin/$t" >&2
+    fi
+done
+
+echo "[tt-deps] installation finished. Self-check: /opt/tt-deps/verify.sh"
+exit 0

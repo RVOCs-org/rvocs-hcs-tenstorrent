@@ -1,0 +1,18 @@
+diff --git a/cmake/riscv64-linux-clang-20-libstdcpp-toolchain.cmake b/cmake/riscv64-linux-clang-20-libstdcpp-toolchain.cmake
+new file mode 100644
+index 00000000..7803ce89
+--- /dev/null
++++ b/cmake/riscv64-linux-clang-20-libstdcpp-toolchain.cmake
+@@ -0,0 +1,12 @@
++set(CMAKE_SYSTEM_PROCESSOR "riscv64")
++
++set(CMAKE_C_COMPILER clang-20 CACHE INTERNAL "C compiler")
++
++set(CMAKE_CXX_COMPILER clang++-20 CACHE INTERNAL "C++ compiler")
++
++# Use for configure time
++set(ENABLE_LIBCXX FALSE CACHE INTERNAL "Using clang's libc++")
++
++# riscv64: prefer LLD. mold cannot link ThinLTO objects without LLVMgold.so
++# (llvm-20-linker-tools), which is not installed; lld handles ThinLTO natively.
++set(CMAKE_LINKER_TYPE LLD)

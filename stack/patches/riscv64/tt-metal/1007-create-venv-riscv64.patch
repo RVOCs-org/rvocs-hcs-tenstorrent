@@ -1,0 +1,37 @@
+diff --git a/create_venv.sh b/create_venv.sh
+index 1a088aa6..5b27ab9d 100755
+--- a/create_venv.sh
++++ b/create_venv.sh
+@@ -331,7 +331,7 @@ echo "Installing uv ${UV_CURRENT_VERSION} into venv..."
+ uv pip install "uv==${UV_CURRENT_VERSION}"
+ 
+ # PyTorch CPU index URL for all uv pip commands
+-PYTORCH_INDEX="https://download.pytorch.org/whl/cpu"
++PYTORCH_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
+ 
+ if [ "$OS_ID" = "ubuntu" ] && [ "$OS_VERSION" = "22.04" ]; then
+     echo "Ubuntu 22.04 detected: force pip/setuptools/wheel versions"
+@@ -343,6 +343,12 @@ else
+     uv pip install --upgrade wheel setuptools==80
+ fi
+ 
++echo "Preinstalling sdist build backends (riscv64: --no-build-isolation needs them in-env)"
++uv pip install --extra-index-url "$PYTORCH_INDEX" \
++    --index-strategy unsafe-best-match \
++    scikit-build-core pybind11 maturin setuptools_rust meson-python setuptools_scm flit-core poetry-core hatchling pdm-backend \
++    "cython>=3.0" "setuptools==80" "wheel==0.45.1" "numpy==2.5.3"
++
+ echo "Installing dev dependencies"
+ # Use --extra-index-url for PyTorch CPU wheels and index-strategy for transitive deps
+ # no-build-isolation as a workaround for setuptools/mmcv
+@@ -351,8 +357,8 @@ uv pip install --extra-index-url "$PYTORCH_INDEX" \
+     --no-build-isolation \
+     -r "$(pwd)/tt_metal/python_env/requirements-dev.txt"
+ 
+-echo "Installing tt-triage dependencies"
+-uv pip install --index-strategy unsafe-best-match -r "$(pwd)/tools/triage/requirements.txt"
++# riscv64: skip tt-triage deps (pycapnp/tt-umd have no riscv64 wheels; triage is a debug tool)
++echo "SKIP: tt-triage dependencies (riscv64)"
+ 
+ echo "Installing tt-metal"
+ uv pip install -e .

@@ -1,0 +1,3 @@
+# Applied in order with git apply; see docs/BUILD.md for adding a patch
+1001-prefer-staged-sfpi-package.patch
+1002-include-cross-node-dfb.patch

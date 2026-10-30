@@ -1,0 +1,130 @@
+diff --git a/docs/requirements-docs.txt b/docs/requirements-docs.txt
+index 47c39171..6b2d0b03 100644
+--- a/docs/requirements-docs.txt
++++ b/docs/requirements-docs.txt
+@@ -3,12 +3,10 @@ sphinx==7.1.2
+ sphinx-rtd-theme==1.3.0
+ sphinx-copybutton==0.5.2
+ sphinxcontrib-email==0.3.5
+-lxml==6.1.0
+ breathe==4.35.0
+ nbsphinx==0.9.3
+ sphinxcontrib-jquery==4.1
+ ipython==8.12.3
+-pandoc==2.3
+ tabulate==0.9.0
+ myst-parser==3.0.0
+ nbconvert==7.17.1
+diff --git a/models/demos/qwen25_vl/requirements.txt b/models/demos/qwen25_vl/requirements.txt
+index 9b68f9cd..af65edf6 100644
+--- a/models/demos/qwen25_vl/requirements.txt
++++ b/models/demos/qwen25_vl/requirements.txt
+@@ -2,5 +2,5 @@
+ accelerate >= 0.27.2
+ torch>=2.6.0
+ torchvision>=0.21.0
+-qwen-vl-utils
++# qwen-vl-utils (needs av/ffmpeg-dev; skipped on riscv64)
+ nltk
+diff --git a/pyproject.toml b/pyproject.toml
+index e5c598d5..15b9b628 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -13,7 +13,7 @@ authors = [
+     {email = "info@tenstorrent.com"},
+ ]
+ dependencies = [
+-  "numpy>=1.24.4,<2",
++  "numpy>=1.24.4",
+   "loguru>=0.6.0",
+   "networkx>=3.1",
+   "graphviz>=0.20.3",
+diff --git a/tests/sweep_framework/requirements-sweeps.txt b/tests/sweep_framework/requirements-sweeps.txt
+index 07156730..363239c4 100644
+--- a/tests/sweep_framework/requirements-sweeps.txt
++++ b/tests/sweep_framework/requirements-sweeps.txt
+@@ -2,5 +2,4 @@ termcolor
+ beautifultable
+ faster-fifo; platform_machine != "aarch64"  # no aarch64 Linux wheel; sdist broken
+ # For PostgreSQL database connectivity
+-psycopg2-binary == 2.9.11
+ ijson
+diff --git a/tt_metal/python_env/requirements-dev.txt b/tt_metal/python_env/requirements-dev.txt
+index 560bfa88..5635711a 100644
+--- a/tt_metal/python_env/requirements-dev.txt
++++ b/tt_metal/python_env/requirements-dev.txt
+@@ -14,7 +14,6 @@ pytest-github-actions-annotate-failures==0.3.0
+ platformdirs<4.0.0
+ pre-commit==3.5.0
+ black==26.3.1
+-clang-format==19.1.4
+ build==0.10.0
+ twine==4.0.2
+ yamllint==1.32.0
+@@ -35,8 +34,6 @@ huggingface-hub >= 0.30.0
+ 
+ # For Qwen-VL / multimodal demo preprocessing: qwen-vl-utils (process_vision_info for image prompts)
+ # and av/pyav (the transformers load_video backend used for video prompts, e.g. qwen36 vision_demo)
+-qwen-vl-utils
+-av
+ 
+ # For Tracy WASM profiler web GUI server
+ websockets==16.0
+@@ -50,23 +47,16 @@ pytest-benchmark==5.2.3
+ pytest-repeat==0.9.4
+ jsbeautifier==1.14.7
+ 
+-datasets>=2.20,<3
+ 
+-pyarrow>=21.0.0,<22
+ torch==2.11.0 ; platform_machine == 'aarch64'
+ networkx==3.1
+ torchvision==0.26.0 ; platform_machine == 'aarch64'
+ torchmetrics==1.9.0
+-torch-fidelity==0.3.0
+ xlsxwriter==3.0.8
+-tiktoken==0.7.0
+ tqdm==4.66.3
+ enlighten==1.12.4
+ sentencepiece==0.2.1
+-numba>=0.58.1
+-librosa==0.10.0
+ timm>=1.0.0
+-opencv-python-headless==4.8.1.78
+ diffusers==0.38.0
+ accelerate==1.7.0
+ peft==0.19.1
+@@ -77,23 +67,20 @@ einops==0.6.1
+ # transitive dep, which uses dill >=0.3.7, however many packages require
+ # dill < 0.3.7
+ multiprocess==0.70.14
+-evaluate==0.4.0
+ bert-score==0.3.12
+ fsspec==2023.9.2 # Temporary pin to 2023.9.2: https://github.com/tenstorrent/tt-metal/issues/3314
+ docopt==0.6.2
+ tabulate==0.9.0
+ blobfile==3.1.0 # Required for llama3
+-numpy>=1.24.4,<2
++numpy==2.5.3
+ pydantic==2.9.2 # Required for Superset benchmarking
+-fiftyone==0.25.2 # Required for Yolo benchmarking
+ jiwer==3.0.5 # Required for speech recognition evaluation
+ toolz==0.12.0 # Required for Save environment data step
+-open_clip_torch==2.26.1 # Required for SDXL accuracy evaluation
+ 
+ # Suff that used to be in pyproject.toml
+ # Needed for various tests
+ pyyaml>=5.4
+-matplotlib
++matplotlib==3.11.1
+ Pillow==12.3.0
+ jupyterlab==4.5.9
+ ipywidgets==8.1.1
+@@ -103,7 +90,6 @@ dash==2.15.0
+ pandas==2.3.3
+ plotly==5.18.0
+ seaborn==0.13.2
+-medpy==0.5.2 # Required for vanilla unet
+ kagglehub==0.2.9
+ efficientnet-pytorch==0.7.1
+ 

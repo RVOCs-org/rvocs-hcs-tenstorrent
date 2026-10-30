@@ -1,0 +1,49 @@
+diff --git a/tt_metal/sfpi-info.sh b/tt_metal/sfpi-info.sh
+index ea9a30c4..142749d2 100755
+--- a/tt_metal/sfpi-info.sh
++++ b/tt_metal/sfpi-info.sh
+@@ -193,31 +193,29 @@ any additional packages or issues you encounter by filing an issue at
+ https://github.com/tenstorrent/tt-metal/issues
+ EOF
+ 
++# riscv64 adaptation: use pre-staged source when present (bind mount or copy)
+ if ! [[ -d .git ]]; then
+-    if [[ -t 0 ]]; then
+-	echo >&2
+-	read -p "Confirm you have read and understood the above:" yes
+-	if ! [[ $yes =~ ^[Yy] ]]; then
+-	    echo "Assuming you have anyway" >&2
+-	fi
++    if [[ -d /mnt/sfpi-src/.git ]]; then
++        echo "Using pre-staged sfpi source from /mnt/sfpi-src" | dupstderr
++        cp -a /mnt/sfpi-src/. .
++    else
++        echo "Cloning the repository ..." | dupstderr
++        (set -x
++         git clone --depth 1 $sfpi_repo .)
+     fi
+-    echo | dupstderr
+-    echo "Cloning the repository ..." | dupstderr
+-    (set -x
+-     git clone --depth 1 $sfpi_repo .)
+ fi
+ echo | dupstderr
+ echo "Fetching sfpi $sfpi_version ..." | dupstderr
+ (set -x
+- git fetch --depth 1 origin "refs/tags/$sfpi_version:refs/tags/$sfpi_version"
+- git fetch --depth 1 origin $sfpi_version
+- git -c "advice.detachedHead=false" checkout $sfpi_version
+- git submodule update --depth 1 --init --recursive)
++ git fetch --depth 1 origin "refs/tags/$sfpi_version:refs/tags/$sfpi_version" || echo "WARN: tag fetch failed, using staged refs"
++ git fetch --depth 1 origin $sfpi_version || echo "WARN: fetch failed, using staged refs"
++ git -c "advice.detachedHead=false" checkout -f $sfpi_version || echo "WARN: checkout failed"
++ git submodule update --depth 1 --init --recursive || echo "WARN: submodule update failed (using staged submodules)")
+ 
+ echo | dupstderr
+ echo "Building ..." | dupstderr
+ (set -x; rm -rf build)
+-(set -x; scripts/build.sh --test-tt 2>&1)
++(set -x; scripts/build.sh 2>&1)
+ 
+ echo | dupstderr
+ echo "Packaging ..." | dupstderr

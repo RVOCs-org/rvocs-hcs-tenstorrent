@@ -1,0 +1,5 @@
+# Build workspace (fetched sources, wheelhouse, logs) - not committed
+work/
+# Build artifacts (tar.zst / .deb / sha256) - not committed, delivery only
+dist/
+*.log

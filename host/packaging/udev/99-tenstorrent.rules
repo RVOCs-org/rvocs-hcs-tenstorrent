@@ -1,0 +1,5 @@
+# Tenstorrent device permissions: let unprivileged users and Docker containers access them
+# tt-kmd creates the character devices under /dev/tenstorrent/<n>
+KERNEL=="tenstorrent!*", SUBSYSTEM=="tenstorrent", MODE="0666"
+SUBSYSTEM=="tenstorrent", MODE="0666"
+KERNEL=="tenstorrent*", MODE="0666"

@@ -1,0 +1,15 @@
+[submodule "upstream/tt-inference-server"]
+	path = stack/upstream/tt-inference-server
+	url = https://github.com/tenstorrent/tt-inference-server.git
+[submodule "upstream/tt-metal"]
+	path = stack/upstream/tt-metal
+	url = https://github.com/tenstorrent/tt-metal.git
+[submodule "upstream/vllm-tt-plugin"]
+	path = stack/upstream/vllm-tt-plugin
+	url = https://github.com/tenstorrent/vllm-tt-plugin.git
+[submodule "upstream/sfpi"]
+	path = stack/upstream/sfpi
+	url = https://github.com/tenstorrent/sfpi.git
+[submodule "upstream/tt-smi"]
+	path = stack/upstream/tt-smi
+	url = https://github.com/tenstorrent/tt-smi.git

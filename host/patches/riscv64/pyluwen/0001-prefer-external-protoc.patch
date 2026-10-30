@@ -1,0 +1,19 @@
+--- a/crates/luwen-api/build.rs	2006-07-24 09:21:28.000000000 +0800
++++ b/crates/luwen-api/build.rs	2026-10-24 17:34:23.668993331 +0800
+@@ -37,7 +37,15 @@
+     // protobuf-compiler version. fw_table_override.proto uses proto3
+     // `optional`, which needs protoc >= 3.15; CI environments often ship
+     // older protoc that doesn't recognise the feature.
+-    env::set_var("PROTOC", protoc_bin_vendored::protoc_bin_path()?);
++    // riscv64（以及任何没有 vendored protoc 二进制的平台）：优先使用外部/系统 protoc。
++    let protoc = match std::env::var("PROTOC") {
++        Ok(p) if !p.is_empty() => std::path::PathBuf::from(p),
++        _ => match protoc_bin_vendored::protoc_bin_path() {
++            Ok(p) => p,
++            Err(_) => std::path::PathBuf::from("protoc"),
++        },
++    };
++    env::set_var("PROTOC", protoc);
+ 
+     // Get the output directory from Cargo
+     let out_dir = env::var("OUT_DIR")?;

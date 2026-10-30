@@ -1,0 +1,46 @@
+name: patches-apply-check
+
+# Verified on an amd64 runner:
+#   1. all scripts are syntactically valid (bash -n)
+#   2. the per-arch patch series applies cleanly to the pinned submodule commits
+#     (step 2 is skipped automatically when the branch has no patches/)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Script syntax check
+        run: |
+          set -e
+          for f in scripts/*.sh scripts/lib/*.sh; do
+            bash -n "$f"
+            echo "syntax OK: $f"
+          done
+
+      - name: Patch series apply check
+        run: |
+          set -e
+          [ -d patches ] || { echo "no patches/ on this branch; skip"; exit 0; }
+          for series in patches/*/series; do
+            name="$(basename "$(dirname "$series")")"
+            case "$name" in
+              tt-metal)       tree="upstream/tt-metal" ;;
+              vllm-tt-plugin) tree="upstream/vllm-tt-plugin" ;;
+              *) echo "unknown patch dir: $name"; exit 1 ;;
+            esac
+            pdir="$(dirname "$series")"
+            echo "== checking $name against $tree =="
+            while read -r p; do
+              case "$p" in ''|'#'*) continue ;; esac
+              git -C "$tree" apply --check "$pdir/$p"
+              echo "  applies: $p"
+            done < "$series"
+          done
