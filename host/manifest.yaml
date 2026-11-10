@@ -9,7 +9,7 @@ version: 1
 
 bundle:
   name: rvocs-tt-deps
-  version: v0.1.0            # repository version (VERSION); part of the artifact names
+  version: v0.1.0            # repository-root VERSION; part of the artifact names
   formats: [tar.zst, deb]     # both are produced by every build and install the same state
   artifacts:                  # <debarch> is the Debian architecture: amd64 / arm64 / riscv64
     - dist/rvocs-tt-deps_<version>_<debarch>.tar.zst

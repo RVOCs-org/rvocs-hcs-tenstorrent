@@ -11,7 +11,7 @@ version: 1
 
 project:
   name: tenstorrent
-  version: v0.1.0            # repository VERSION; part versions currently match
+  version: v0.1.0            # repository-root VERSION; the only version file (host/ and stack/ read it)
   layout:
     host:  host dependency packages (rvocs-tt-deps_<version>_<debarch>.deb)
     stack: vLLM inference image (rvocs-vllm-tt-<arch>:<version>)

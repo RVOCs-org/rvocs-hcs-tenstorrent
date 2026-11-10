@@ -6,9 +6,12 @@ set -euo pipefail
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 WORK_DIR="${WORK_DIR:-$REPO_ROOT/work}"
 LOG_DIR="$WORK_DIR/logs"
-# Repository version: VERSION is the single source of truth (also used for
-# artifact naming). Override with TT_VERSION when needed.
-TT_VERSION="${TT_VERSION:-$(tr -d '[:space:]' < "$REPO_ROOT/VERSION" 2>/dev/null || echo v0.1.0)}"
+# Repository version: the VERSION file at the repository root is the single
+# source of truth (also used for artifact naming); this part has no own VERSION.
+# REPO_ROOT points at stack/, so the root file is one directory up.
+# Override with TT_VERSION when needed.
+REPO_VERSION_FILE="$(cd "$REPO_ROOT/.." && pwd)/VERSION"
+TT_VERSION="${TT_VERSION:-$(tr -d '[:space:]' < "$REPO_VERSION_FILE" 2>/dev/null || echo v0.1.0)}"
 ARCH="${ARCH:-$(uname -m)}"          # x86_64 | aarch64 | riscv64
 PROXY_MODE="${PROXY_MODE:-auto}"     # cn | direct | auto
 PROXY="${PROXY:-}"                   # 1|0 after resolve_proxy

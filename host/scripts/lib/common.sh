@@ -8,9 +8,12 @@ SRC_DIR="$WORK_DIR/src"                 # official sources fetched at build time
 DIST_DIR="$REPO_ROOT/dist"              # build artifacts (never committed)
 PATCH_DIR="$REPO_ROOT/patches"
 LOG_DIR="$WORK_DIR/logs"
-# Repository version: VERSION is the single source of truth (also used for
-# artifact naming). Override with TTI_VERSION when needed.
-TTI_VERSION="${TTI_VERSION:-$(tr -d '[:space:]' < "$REPO_ROOT/VERSION" 2>/dev/null || echo v0.1.0)}"
+# Repository version: the VERSION file at the repository root is the single
+# source of truth (also used for artifact naming); this part has no own VERSION.
+# REPO_ROOT points at host/, so the root file is one directory up.
+# Override with TTI_VERSION when needed.
+REPO_VERSION_FILE="$(cd "$REPO_ROOT/.." && pwd)/VERSION"
+TTI_VERSION="${TTI_VERSION:-$(tr -d '[:space:]' < "$REPO_VERSION_FILE" 2>/dev/null || echo v0.1.0)}"
 
 ARCH="${ARCH:-$(uname -m)}"
 PROXY_MODE="${PROXY_MODE:-auto}"

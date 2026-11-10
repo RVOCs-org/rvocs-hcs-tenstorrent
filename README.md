@@ -50,7 +50,8 @@ RVOCs 的 **Tenstorrent 厂商仓库**（`rvocs-hcs-{vendor}` 命名）。单分
 
 ## 版本
 
-仓库版本在根目录 `VERSION`（当前 `v0.1.0`），同时用于 `host/` 交付包与 `stack/` 镜像命名。
+仓库版本只有根目录一个 `VERSION`（当前 `v0.1.0`）：`host/` 交付包与 `stack/` 镜像命名都读它，
+部件目录（`host/`、`stack/`）不再各自维护版本文件。
 厂商级汇总（产物清单、两部分的 pin 概览）见 [manifest.yaml](manifest.yaml)；
 权威 pin 分别在 [`host/manifest.yaml`](host/manifest.yaml)（sources）与
 [`stack/manifest.yaml`](stack/manifest.yaml)（upstream 子模块 gitlink）。
