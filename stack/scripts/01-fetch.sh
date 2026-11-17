@@ -13,7 +13,11 @@ require_cmd git
 require_cmd curl
 
 # ---------------------------------------------------------------- submodules
-[ -f "$REPO_ROOT/.gitmodules" ] || die "missing .gitmodules (incomplete checkout?)"
+# git resolves .gitmodules from the superproject root, never from this directory:
+# the file lives at the repository root and its paths are stack/upstream/<name>.
+SUPER_ROOT="$(git -C "$REPO_ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
+[ -n "$SUPER_ROOT" ] && [ -f "$SUPER_ROOT/.gitmodules" ] \
+  || die "missing .gitmodules at the repository root (incomplete checkout?)"
 
 # Nested submodules that are irrelevant to the image build and always fail on this network:
 #   - kvcache-ai/Mooncake uses an SSH URL (always fails without a key)

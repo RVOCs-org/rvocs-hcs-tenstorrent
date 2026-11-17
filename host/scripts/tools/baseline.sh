@@ -50,7 +50,8 @@ if grep -qE '^upstream:' "$MANIFEST"; then
 else
   SECTION="sources"
 fi
-if [ "$SECTION" = upstream ] && [ -f "$REPO_ROOT/.gitmodules" ]; then
+SUPER_ROOT="$(git -C "$REPO_ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
+if [ "$SECTION" = upstream ] && [ -n "$SUPER_ROOT" ] && [ -f "$SUPER_ROOT/.gitmodules" ]; then
   SUBMODULES=1
   PATH_PREFIX="upstream"
 else

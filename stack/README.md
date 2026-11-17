@@ -22,7 +22,7 @@ vLLM OpenAI 兼容推理镜像；支持 **riscv64 源码构建**（`patches/risc
 | tt-smi（镜像内） | tenstorrent/tt-smi | v3.1.1 |
 | Python / torch | — | 3.12.15 / 2.14.0+cpu（RISE riscv64 wheel） |
 
-精确 pin 由 `upstream/` 下的 git 子模块承载（见 `.gitmodules` 与 `manifest.yaml`），
+精确 pin 由 `upstream/` 下的 git 子模块承载（见**仓库根目录**的 `.gitmodules` 与 `manifest.yaml`），
 用 `scripts/tools/baseline.sh status / apply / check` 管理基线。
 
 ## 单分支模型
