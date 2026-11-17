@@ -25,6 +25,9 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MANIFEST="$REPO_ROOT/manifest.yaml"
+# Everything below uses paths relative to this directory (upstream/<name>,
+# work/src/<name>); cd here so the tool behaves the same from any cwd.
+cd "$REPO_ROOT"
 
 log()  { printf '\033[1;32m[%s]\033[0m %s\n' "$(date +%H:%M:%S)" "$*"; }
 warn() { printf '\033[1;33m[WARN]\033[0m %s\n' "$*" >&2; }
@@ -148,7 +151,7 @@ cmd_status() {
     if [ "$SUBMODULES" = 1 ]; then
       gl=$(gitlink_of "$path")
       hgl=$(head_gitlink_of "$path")
-      [ -e "$path/.git" ] && head=$(git -C "$path" rev-parse --short HEAD 2>/dev/null || true)
+      [ -e "$path/.git" ] && head=$(git -C "$path" rev-parse HEAD 2>/dev/null || true)
     fi
     if [ -z "$commit" ]; then
       state="no-commit"
@@ -158,13 +161,13 @@ cmd_status() {
       state="drift"
     elif [ "$SUBMODULES" = 1 ] && [ -n "$hgl" ] && [ "$gl" != "$hgl" ]; then
       state="staged"
-    elif [ "$SUBMODULES" = 1 ] && [ -n "$head" ] && [ "${commit:0:12}" != "${head:0:12}" ]; then
+    elif [ "$SUBMODULES" = 1 ] && [ -n "$head" ] && [ "$commit" != "$head" ]; then
       state="worktree-differs"
     else
       state="ok"
     fi
     printf '%-24s %-14s %-12s %-12s %-12s %s\n' \
-      "$name" "$ref" "${commit:0:12}" "${gl:0:12}" "${head:--}" "$state"
+      "$name" "$ref" "${commit:0:12}" "${gl:0:12}" "${head:0:12}" "$state"
   done < <(manifest_entries)
   echo
   echo "state: ok = manifest, gitlink and work tree agree; drift = manifest vs gitlink;"
