@@ -371,6 +371,9 @@ COPY --chown=${CONTAINER_APP_USERNAME}:${CONTAINER_APP_USERNAME} \
 
 # Fix venv symlinks after copy and install additional app requirements
 # riscv64: relink to uv-managed python 3.12 (venv was built with 3.12; system python is 3.14)
+# COPY --chown above already owns python_env. A `chown -R` on the whole tree
+# would copy up every lower-layer file into this layer (overlayfs, multi-GB),
+# so only correct the few files uv pip install just created as root.
 RUN cd ${PYTHON_ENV_DIR}/bin \
     && rm -f python python3 \
     && ln -s /usr/local/bin/python3.12 python3 \
@@ -378,7 +381,8 @@ RUN cd ${PYTHON_ENV_DIR}/bin \
     && /bin/bash -c "source ${PYTHON_ENV_DIR}/bin/activate \
     && uv pip install --no-cache-dir -r ${APP_DIR}/requirements.txt \
     && uv cache clean" \
-    && chown -R ${CONTAINER_APP_USERNAME}:${CONTAINER_APP_USERNAME} ${PYTHON_ENV_DIR}
+    && find ${PYTHON_ENV_DIR} ! -user ${CONTAINER_APP_USERNAME} \
+         -exec chown ${CONTAINER_APP_USERNAME}:${CONTAINER_APP_USERNAME} {} +
 
 # Prove the plugin survived the builder-to-runtime copy and final requirements install.
 RUN if [ -n "${TT_QUETZAL_COMMIT_SHA}" ]; then \
