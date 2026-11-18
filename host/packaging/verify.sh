@@ -9,11 +9,31 @@ ok()   { printf '  [OK]   %s\n' "$*"; }
 bad()  { printf '  [FAIL] %s\n' "$*"; FAIL=$((FAIL+1)); }
 warn() { printf '  [WARN] %s\n' "$*"; WARN=$((WARN+1)); }
 
+# `lsmod | grep -q` under pipefail is unreliable: grep exits on the first
+# match, lsmod can get SIGPIPE and the pipeline reports failure even though the
+# module is loaded. Read the whole stream with awk and check /sys/module too.
+module_loaded() {
+  if [ -d "${MODULE_SYSFS_DIR:-/sys/module/tenstorrent}" ]; then return 0; fi
+  lsmod 2>/dev/null | awk 'NR > 1 && $1 == "tenstorrent" { found = 1 } END { exit(found ? 0 : 1) }'
+}
+
+# DKMS/udev may finish loading the module a moment after install.sh returns.
+wait_for_module() { # <seconds>
+  local i
+  for ((i = 0; i < ${1:-5}; i++)); do
+    module_loaded && return 0
+    sleep 1
+  done
+  module_loaded
+}
+
 echo "== System =="
 ok "arch=$ARCH distro=$DISTRO kernel=$KV python=$PYTAG"
 
 echo "== Kernel driver =="
-if lsmod | grep -q '^tenstorrent'; then ok "module tenstorrent is loaded"; else bad "module tenstorrent is not loaded (dmesg | grep -i tenstorrent)"; fi
+wait_secs="${MODULE_WAIT_SECS:-5}"
+if wait_for_module "$wait_secs"; then ok "module tenstorrent is loaded"
+else bad "module tenstorrent is not loaded after ${wait_secs}s (dmesg | grep -i tenstorrent)"; fi
 if modinfo tenstorrent >/dev/null 2>&1; then ok "module file: $(modinfo -F filename tenstorrent | head -1)"; else warn "tenstorrent.ko not found"; fi
 v="$(modinfo -F version tenstorrent 2>/dev/null | head -1)"; [ -n "$v" ] && ok "driver version $v"
 [ -f /etc/modules-load.d/tenstorrent.conf ] && ok "automatic load at boot configured" || warn "missing /etc/modules-load.d/tenstorrent.conf"

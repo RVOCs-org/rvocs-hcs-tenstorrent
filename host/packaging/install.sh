@@ -19,6 +19,13 @@ log()  { printf '\033[1;32m[%s]\033[0m %s\n' "$(date +%H:%M:%S)" "$*"; }
 warn() { printf '\033[1;33m[WARN]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[ERROR]\033[0m %s\n' "$*" >&2; exit 1; }
 
+# Same check as packaging/verify.sh: read the whole lsmod stream (no grep -q,
+# no SIGPIPE under pipefail) and fall back to /sys/module/tenstorrent.
+module_loaded() {
+  if [ -d "${MODULE_SYSFS_DIR:-/sys/module/tenstorrent}" ]; then return 0; fi
+  lsmod 2>/dev/null | awk 'NR > 1 && $1 == "tenstorrent" { found = 1 } END { exit(found ? 0 : 1) }'
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --check) CHECK=1; shift ;;
@@ -126,8 +133,9 @@ install_kmd() {
     dkms install -m tenstorrent -v "$ver" --force
   fi
   echo tenstorrent > /etc/modules-load.d/tenstorrent.conf
-  modprobe tenstorrent 2>/dev/null || warn "modprobe failed (harmless without a card)"
-  lsmod | grep -q '^tenstorrent' && log "  module loaded" || warn "module not loaded"
+  if ! modprobe tenstorrent; then warn "modprobe tenstorrent failed (harmless without a card; check dmesg)"; fi
+  if module_loaded; then log "  module loaded"
+  else warn "module not loaded (check dmesg | grep -i tenstorrent)"; fi
 }
 
 # ---------------------------------------------------------------- udev
