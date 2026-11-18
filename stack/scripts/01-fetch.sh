@@ -59,10 +59,18 @@ if [ "${SUBMODULE_DEPTH:-1}" != 0 ]; then
   log "shallow submodule clone (depth ${SUBMODULE_DEPTH:-1}); set SUBMODULE_DEPTH=0 for full history"
 fi
 
+# Build the exclusion list BEFORE recursing: once git descends into sfpi it is
+# too late to skip binutils/gcc/newlib (~1.7 GB). -c options are inherited by
+# the nested git processes through GIT_CONFIG_PARAMETERS.
+EXCL=()
+for s in "${IGNORED_SUBMODULES[@]}"; do EXCL+=(-c "submodule.$s.update=none"); done
+if [ "$ARCH" != riscv64 ] && [ "${FETCH_SFPI_SOURCES:-1}" = 0 ]; then
+  for s in binutils gcc newlib; do EXCL+=(-c "submodule.$s.update=none"); done
+  log "skipping sfpi toolchain submodules for $ARCH (FETCH_SFPI_SOURCES=0)"
+fi
+
 log "updating nested submodules (recursive, irrelevant ones excluded) ..."
-if ! run_git \
-      -c submodule."tt-media-server/cpp_server/third_party/Mooncake".update=none \
-      -c submodule."tt-media-server/cpp_server/tt-llm-engine".update=none \
+if ! run_git "${EXCL[@]}" \
       -C "$REPO_ROOT" submodule update --init "${DEPTH_ARGS[@]}" --recursive 2>&1; then
   warn "recursive update failed: usually a new irrelevant submodule or a network interruption"
   warn "  fetch a single item: git -C upstream/<repo> submodule update --init <path>"

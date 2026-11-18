@@ -74,8 +74,14 @@ fi
 
 # 3) build the toolchain layer directly
 log "building the base image: $BASE_IMAGE (FROM $BASE_SRC)"
+PIP_BUILD_ARGS=()
+if [ -n "${PIP_INDEX_URL:-}" ]; then
+  PIP_BUILD_ARGS+=(--build-arg "PIP_INDEX_URL=$PIP_INDEX_URL")
+  PIP_BUILD_ARGS+=(--build-arg "PIP_EXTRA_INDEX_URL=${PIP_EXTRA_INDEX_URL:-$PIP_INDEX_URL}")
+fi
 DOCKER_BUILDKIT=1 docker build --network host \
   --build-arg BASE_OS_IMAGE="$BASE_SRC" \
+  "${PIP_BUILD_ARGS[@]}" \
   -t "$BASE_IMAGE" \
   -f "$REPO_ROOT/docker/base.Dockerfile" \
   "$REPO_ROOT/docker"

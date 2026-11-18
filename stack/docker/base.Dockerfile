@@ -9,6 +9,16 @@
 ARG BASE_OS_IMAGE=ubuntu:22.04
 FROM ${BASE_OS_IMAGE}
 
+# PyPI mirror for EVERY pip call in this file. It must be declared before the
+# first `pip3 install` (the cmake wheel below), otherwise that call uses
+# pypi.org. Override with --build-arg PIP_INDEX_URL=...; an empty value
+# falls back to the official index.
+ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PIP_EXTRA_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ENV PIP_INDEX_URL=${PIP_INDEX_URL} \
+    PIP_EXTRA_INDEX_URL=${PIP_EXTRA_INDEX_URL} \
+    UV_PYTHON_INSTALL_DIR=/opt/uv-python
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Los_Angeles
 
@@ -95,10 +105,8 @@ RUN set -eux; \
 
 # uv + a preinstalled uv-managed Python 3.12 (used by create_venv.sh; the tt-metal
 # python environment must be 3.12 for the ttnn bindings)
-# Direct PyPI is slow here, so everything goes through the Tsinghua mirror
-ENV PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
-    PIP_EXTRA_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
-    UV_PYTHON_INSTALL_DIR=/opt/uv-python
+# PIP_INDEX_URL / PIP_EXTRA_INDEX_URL / UV_PYTHON_INSTALL_DIR are declared
+# before the first pip install above, so every RUN here inherits them.
 # GitHub release assets are slow directly, so they go through gh-proxy
 ENV UV_PYTHON_INSTALL_MIRROR=https://gh-proxy.com/https://github.com/astral-sh/python-build-standalone/releases/download
 ENV UV_HTTP_RETRIES=10
