@@ -132,11 +132,43 @@ install_kmd() {
 
 # ---------------------------------------------------------------- udev
 install_udev() {
-  [ -f "$HERE/udev/99-tenstorrent.rules" ] || return 0
-  install -Dm644 "$HERE/udev/99-tenstorrent.rules" /etc/udev/rules.d/99-tenstorrent.rules
-  udevadm control --reload-rules 2>/dev/null || true
-  udevadm trigger --subsystem-match=pci 2>/dev/null || true
-  log "udev rules installed (/dev/tenstorrent/* mode 0666)"
+  local rule="$HERE/udev/99-tenstorrent.rules"
+  local dst=/etc/udev/rules.d/99-tenstorrent.rules
+  local dev_dir="${TT_DEV_DIR:-/dev/tenstorrent}" n mode bad=0
+  [ -f "$rule" ] || { warn "udev rule file missing: $rule"; return 0; }
+
+  # The .deb already ships the rule; the tar bundle installs it at runtime.
+  if [ -f "$dst" ] && cmp -s "$rule" "$dst"; then
+    log "  udev rule already in place: $dst"
+  elif ! install -Dm644 "$rule" "$dst"; then
+    warn "failed to install $dst"
+    return 0
+  fi
+
+  udevadm control --reload-rules || warn "udevadm control --reload-rules failed"
+  # tenstorrent is a KMD-owned subsystem, not pci: triggering pci leaves the
+  # existing /dev/tenstorrent/* nodes at the kernel default 0600.
+  udevadm trigger --action=add --subsystem-match=tenstorrent \
+    || udevadm trigger --action=add --sysname-match='tenstorrent*' \
+    || warn "udevadm trigger failed; permissions may apply only after reboot"
+
+  if [ -d "$dev_dir" ] && compgen -G "$dev_dir/*" >/dev/null; then
+    for n in "$dev_dir"/*; do
+      mode="$(stat -c '%a' "$n" 2>/dev/null || echo 000)"
+      if [ "$mode" != 666 ]; then
+        warn "device node $(basename "$n") is mode $mode, expected 666"
+        bad=1
+      fi
+    done
+  else
+    warn "no $dev_dir/* nodes yet; the rule applies when the driver creates them"
+  fi
+
+  if [ "$bad" = 0 ]; then
+    log "udev rules installed (/dev/tenstorrent/* mode 0666)"
+  else
+    warn "udev rules installed but device permissions are not 0666 yet; retry: sudo udevadm trigger --action=add --subsystem-match=tenstorrent"
+  fi
 }
 
 # ---------------------------------------------------------------- tools (one environment per tool + bare command)

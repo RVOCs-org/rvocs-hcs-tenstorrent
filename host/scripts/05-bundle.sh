@@ -66,6 +66,12 @@ rm -rf "$D"
 mkdir -p "$D/DEBIAN" "$D/opt/tt-deps"
 cp -a "$B/." "$D/opt/tt-deps/"
 
+# Ship the udev rule as a tracked package file so `dpkg -S` can find it and
+# `dpkg -r` removes it. The tar bundle has no /etc payload; install.sh still
+# installs the same rule at runtime when the file is missing.
+mkdir -p "$D/etc/udev/rules.d"
+install -m644 "$B/udev/99-tenstorrent.rules" "$D/etc/udev/rules.d/99-tenstorrent.rules"
+
 # installed size in KiB, reported by dpkg
 ISIZE="$(du -sk "$D/opt/tt-deps" | cut -f1)"
 
