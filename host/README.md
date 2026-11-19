@@ -22,7 +22,7 @@ Tenstorrent 宿主机依赖环境的**一键构建 + 单一交付包**：内核�
 推荐用编排层（自动从 Releases 下载最新 `.deb` 并安装）：
 
 ```bash
-../rvocs-main/rvocs.sh --target tt-host --arch riscv --install --yes
+../rvocs-main/rvocs.sh --target tt-host --arch riscv --install
 ```
 
 或手动（tar.zst 交付包）：

@@ -29,9 +29,9 @@ RVOCs 的 **Tenstorrent 厂商仓库**（`rvocs-hcs-{vendor}` 命名）。单分
 推荐通过编排层使用（自动处理发现、下载与部署）：
 
 ```bash
-../rvocs-main/rvocs.sh --target tt-host --arch riscv --install --yes   # -> host/
-../rvocs-main/rvocs.sh --target tt-stack  --arch riscv --build            # -> stack/
-../rvocs-main/rvocs.sh --target tt-stack  --deploy --yes
+../rvocs-main/rvocs.sh --target tt-host --arch riscv --install   # -> host/
+../rvocs-main/rvocs.sh --target tt-stack  --arch riscv --build   # -> stack/
+# 启动：--deploy 暂未开放，见 rvocs-main 的 docs/DEPLOY.md（docker run 示例）
 ```
 
 宿主机 `.deb` 包通过 `--download` / `--install` 获取（资产发布在 GitHub Releases）；

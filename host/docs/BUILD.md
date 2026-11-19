@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | `fetch` | 从 GitHub 拉 5 个官方源码到 `work/src`，pin 到 `manifest.yaml` 的 ref | `work/src/*` |
 | `patch` | 重置工作树 → 按 `patches/common/<组件>` 再 `patches/<arch>/<组件>` 顺序 `git apply` | `work/src/*` |
-| `wheels` | 每个目标 Python 一套 wheelhouse；有补丁的组件用源码构建，其余优先取 wheel | `work/wheelhouse/py310|py312|py314` |
+| `wheels` | 每个目标 Python 一套 wheelhouse；有补丁的组件用源码构建，其余优先取 wheel | `work/wheelhouse/py310\|py312\|py314` |
 | `kmd` | （打过补丁的）tt-kmd → DKMS 源码包；`KERNELS` 命中则预编译 `.ko` | `work/kmd/` |
 | `bundle` | 组装 `tt-deps-<ver>-<arch>.tar.zst` 与 `tt-deps_<ver>_<arch>.deb`（各附 sha256） | `dist/` |
 | `verify` | 结构/脚本语法/各目标 wheel 完整性/`install.sh --check` | `work/verify/` |

@@ -37,24 +37,29 @@ vLLM OpenAI 兼容推理镜像；支持 **riscv64 源码构建**（`patches/risc
 ### 用户：使用现成产物
 
 ```bash
-# 1) 裸机安装驱动与工具（见 ../host/）
-../rvocs-main/rvocs.sh --target tt-host --arch riscv --install --yes
+# 1) 裸机安装驱动与工具（见 ../host/；x86_64 把 --arch riscv 换成 --arch x86）
+../rvocs-main/rvocs.sh --target tt-host --arch riscv --install
 
-# 2) 拉取镜像并启动 vLLM OpenAI 兼容服务
+# 2) 拉取镜像（x86_64 用 --arch x86，镜像 tag 为 -amd64）
 ../rvocs-main/rvocs.sh --target tt-stack --arch riscv --download
-../rvocs-main/rvocs.sh --target tt-stack --deploy --yes
+
+# 3) 启动：--deploy 暂未开放，用 docker run（完整参数见 rvocs-main 的 docs/DEPLOY.md）
 ```
 
 或直接 `docker run`（等价形式）：
 
 ```bash
+# x86_64 用 -amd64，riscv64 用 -riscv64
 docker run --ipc host --publish 8000:8000 \
   --device /dev/tenstorrent \
   --mount type=bind,src=/dev/hugepages-1G,dst=/dev/hugepages-1G \
   --volume volume_id_Qwen3-8B:/home/container_app_user/cache_root \
-  rvocs-vllm-tt-riscv64:v0.1.0 \
+  rvocs-vllm-tt-amd64:v0.1.0 \
   --model Qwen3-8B --tt-device n300
 ```
+
+离线部署、鉴权、权重目录与故障排查见 rvocs-main 的
+[docs/DEPLOY.md](https://github.com/RVOCs-org/rvocs-main/blob/main/docs/DEPLOY.md)。
 
 ### 开发者：一键源码构建（riscv64 主机）
 

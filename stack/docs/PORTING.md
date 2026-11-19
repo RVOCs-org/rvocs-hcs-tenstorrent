@@ -1181,7 +1181,7 @@ export B=~/bft-build
 | 23 | .dockerignore | `tail -6 $B/tt-inference-server/.dockerignore` | 含 5 个源码目录 |
 | 24 | 构建 | `setsid nohup bash $B/build-manual.sh > /tmp/build-main.log 2>&1 &` | 日志出现 `#27`…`#31` |
 | 25 | 构建结束 | `grep MANUAL_BUILD_EXIT /tmp/build-main.log` | `MANUAL_BUILD_EXIT=0` |
-| 26 | 镜像存在 | `docker images | grep riscv64` | 15 GB |
+| 26 | 镜像存在 | `docker images \| grep riscv64` | 15 GB |
 | 27 | 验收 | 见 11 命令块 | `ttnn OK` + `combined import OK` |
 | 28 | 上卡运行 | 见 12 | `/v1/models` 返回 200 |
 
