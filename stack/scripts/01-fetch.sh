@@ -12,6 +12,25 @@ resolve_proxy
 require_cmd git
 require_cmd curl
 
+# ---------------------------------------------------------------- retry helpers
+# gh-proxy can truncate a large packfile (tt-metal is ~490 MB even with --depth 1)
+# and git only retries transport errors, not pack-integrity failures. One retry
+# plus a direct fallback keeps a transient proxy hiccup from killing the fetch.
+submodule_update() { # <label> <git args...>
+  local label="$1"; shift
+  if run_git "$@" 2>&1; then return 0; fi
+  warn "$label: first attempt failed, retrying once"
+  if run_git "$@" 2>&1; then return 0; fi
+  if [ "${PROXY:-0}" = 1 ]; then
+    warn "$label: proxy path failed twice, retrying directly (no gh-proxy)"
+    if PROXY=0 run_git "$@" 2>&1; then
+      warn "$label: the direct attempt succeeded; use --proxy direct on this machine next time"
+      return 0
+    fi
+  fi
+  return 1
+}
+
 # ---------------------------------------------------------------- submodules
 # git resolves .gitmodules from the superproject root, never from this directory:
 # the file lives at the repository root and its paths are stack/upstream/<name>.
@@ -37,8 +56,11 @@ log "updating git submodules (top level, no recursion, proxy=$PROXY) ..."
 TOPDEPTH=()
 [ "${SUBMODULE_DEPTH:-1}" != 0 ] && TOPDEPTH=(--depth "${SUBMODULE_DEPTH:-1}")
 
-if ! run_git -C "$REPO_ROOT" submodule update --init "${TOPDEPTH[@]}" 2>&1; then
-  warn "top-level submodule update failed: usually a network interruption. Retry, or use --proxy cn"
+if ! submodule_update "top-level submodules" -C "$REPO_ROOT" submodule update --init "${TOPDEPTH[@]}"; then
+  warn "submodule update failed (top level). Options:"
+  warn "  retry through the proxy:  ./rvocs.sh --target tt-stack --build --proxy cn"
+  warn "  retry directly:           ./rvocs.sh --target tt-stack --build --proxy direct"
+  warn "  seed a local clone:       cp -a <existing-checkout>/upstream/tt-metal $REPO_ROOT/upstream/"
   die "submodule update failed"
 fi
 
@@ -70,11 +92,13 @@ if [ "$ARCH" != riscv64 ] && [ "${FETCH_SFPI_SOURCES:-1}" = 0 ]; then
 fi
 
 log "updating nested submodules (recursive, irrelevant ones excluded) ..."
-if ! run_git "${EXCL[@]}" \
-      -C "$REPO_ROOT" submodule update --init "${DEPTH_ARGS[@]}" --recursive 2>&1; then
-  warn "recursive update failed: usually a new irrelevant submodule or a network interruption"
-  warn "  fetch a single item: git -C upstream/<repo> submodule update --init <path>"
-  warn "  if the submodule really is irrelevant, add it to IGNORED_SUBMODULES in scripts/01-fetch.sh and to manifest.yaml"
+if ! submodule_update "nested submodules" "${EXCL[@]}" \
+      -C "$REPO_ROOT" submodule update --init "${DEPTH_ARGS[@]}" --recursive; then
+  warn "submodule update failed (nested). Options:"
+  warn "  retry directly:        ./rvocs.sh --target tt-stack --build --proxy direct"
+  warn "  fetch one path:        git -C $REPO_ROOT submodule update --init --recursive <path>"
+  warn "  seed a local clone:    cp -a <existing-checkout>/upstream/tt-metal $REPO_ROOT/upstream/"
+  warn "  if it is irrelevant:   add it to IGNORED_SUBMODULES in scripts/01-fetch.sh and manifest.yaml"
   die "submodule update failed"
 fi
 
