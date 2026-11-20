@@ -4,7 +4,7 @@
 # Installs the tt-kmd driver (DKMS or prebuilt), tt-smi/tt-flash/tt-topology as directly
 #           one isolated environment per tool, no venv activation and no sudo needed), persistent 1G hugepages, udev rules
 #
-# Usage: sudo ./install.sh [--check] [--skip-kmd] [--skip-tools] [--skip-hugepages] [--yes]
+# Usage: sudo ./install.sh [--check] [--skip-kmd] [--skip-tools] [--skip-hugepages] [--skip-flash] [--yes]
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VERSION="$(cat "$HERE/VERSION" 2>/dev/null || echo unknown)"
@@ -12,7 +12,7 @@ ARCH="$(uname -m)"
 KV="$(uname -r)"
 DISTRO="$(. /etc/os-release; echo "${VERSION_ID:-unknown}")"
 TT_ROOT=/opt/tenstorrent
-CHECK=0; SKIP_KMD=0; SKIP_TOOLS=0; SKIP_HP=0; ASSUME_YES=0
+CHECK=0; SKIP_KMD=0; SKIP_TOOLS=0; SKIP_HP=0; SKIP_FLASH=0; ASSUME_YES=0
 APT_DISABLED="${APT_DISABLED:-0}"
 
 log()  { printf '\033[1;32m[%s]\033[0m %s\n' "$(date +%H:%M:%S)" "$*"; }
@@ -32,6 +32,7 @@ while [ $# -gt 0 ]; do
     --skip-kmd) SKIP_KMD=1; shift ;;
     --skip-tools) SKIP_TOOLS=1; shift ;;
     --skip-hugepages) SKIP_HP=1; shift ;;
+    --skip-flash) SKIP_FLASH=1; shift ;;
     --no-apt) APT_DISABLED=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
     -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -208,6 +209,45 @@ EOF
   done
 }
 
+# ---------------------------------------------------------------- firmware (n300)
+# The version lives in manifest.yaml (firmware.n300) so a release can bump it
+# without touching this script. Flashing is skipped when no n300 board is present.
+firmware_version() {
+  sed -n 's/^  n300:[[:space:]]*"\{0,1\}\([0-9][0-9.]*\)"\{0,1\}[[:space:]]*$/\1/p' \
+    "$HERE/manifest.yaml" 2>/dev/null | head -1
+}
+
+flash_firmware() {
+  local fw types
+  fw="$(firmware_version)"
+  [ -n "$fw" ] || { warn "manifest.yaml has no firmware.n300 version, skipping the firmware update"; return 0; }
+
+  if [ "$SKIP_TOOLS" = 1 ] || ! command -v tt-smi >/dev/null 2>&1; then
+    warn "tt-smi is not installed, cannot check the board type; skipping the firmware update"
+    return 0
+  fi
+  types="$(tt-smi -s 2>/dev/null | sed -n 's/.*"board_type": "\([^"]*\)".*/\1/p' | sort -u | tr '\n' ' ')"
+  if [ -z "$types" ]; then
+    warn "tt-smi returned no board information; skipping the firmware update"
+    return 0
+  fi
+  case "$types" in
+    *n300*) : ;;
+    *) log "no n300 board detected (${types% }), skipping the firmware update"; return 0 ;;
+  esac
+
+  log "updating the n300 firmware to $fw (tt-flash flash -d $fw)"
+  if [ "${FW_DRY_RUN:-0}" = 1 ]; then
+    log "  [dry-run] tt-flash flash -d $fw"
+    return 0
+  fi
+  if tt-flash flash -d "$fw"; then
+    log "firmware updated to $fw"
+  else
+    warn "tt-flash failed; the card keeps its current firmware (retry: sudo tt-flash flash -d $fw)"
+  fi
+}
+
 # ---------------------------------------------------------------- hugepages (persistent)
 install_hugepages() {
   log "configuring 1G hugepages (NUMA aware, persistent across reboot)"
@@ -228,6 +268,7 @@ install_hugepages() {
 install_udev
 [ "$SKIP_TOOLS" = 0 ] && install_tools
 [ "$SKIP_HP" = 0 ] && install_hugepages
+[ "$SKIP_FLASH" = 0 ] && flash_firmware
 
 mkdir -p /etc/tenstorrent
 cat > /etc/tenstorrent/install-manifest.yaml <<EOF

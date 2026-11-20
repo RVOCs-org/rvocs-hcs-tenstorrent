@@ -7,6 +7,11 @@
 #   - Artifacts are NOT committed: dist/ holds build output (gitignored) and is only for delivery
 version: 1
 
+firmware:
+  # Flash this bundle at the end of install.sh when the detected board is n300
+  # (tt-flash flash -d <version>). Skip it with ./install.sh --skip-flash.
+  n300: "19.17.1"
+
 bundle:
   name: rvocs-tt-deps
   version: v0.1.0            # repository-root VERSION; part of the artifact names
@@ -38,8 +43,8 @@ sources:                       # fetched at build time (shallow clone to ref), n
     commit: e25a46520ab915db9ee823a652406b9f44ed8cdd
   tt-flash:
     url: https://github.com/tenstorrent/tt-flash.git
-    ref: v4.1.0
-    commit: 8c749673763950cde1cf453b6789ed08159edd79
+    ref: v4.2.0
+    commit: 7e8a706ab160885957f3616b332b00f98daede99
   tt-topology:
     url: https://github.com/tenstorrent/tt-topology.git
     ref: v1.2.20
@@ -94,5 +99,6 @@ compat:
     - The image repo ships tt-umd 0.9.10+13 whose KMD_MINIMUM_VERSION=2.0.0 with no upper
       bound, so tt-kmd 2.11.x is compatible (verified: tt-smi 6.8.0 + TT-KMD 2.11.0 on real
       Wormhole hardware).
-    - tt-flash firmware bundles only validate the board, not the tt-metal version, so
-      install.sh does not flash firmware by default.
+    - tt-flash firmware bundles only validate the board, not the tt-metal version.
+      install.sh flashes n300 boards to firmware.n300 (tt-flash flash -d ...) at the
+      end of the run; pass --skip-flash to keep the current firmware.

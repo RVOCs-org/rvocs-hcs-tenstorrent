@@ -94,7 +94,7 @@ PY
 TT_KMD_REF="${TT_KMD_REF:-$(manifest_ref tt-kmd ttkmd-2.11.0)}"
 TT_UMD_REF="${TT_UMD_REF:-$(manifest_ref tt-umd v0.9.14)}"
 TT_SMI_REF="${TT_SMI_REF:-$(manifest_ref tt-smi v6.8.0)}"
-TT_FLASH_REF="${TT_FLASH_REF:-$(manifest_ref tt-flash v4.1.0)}"
+TT_FLASH_REF="${TT_FLASH_REF:-$(manifest_ref tt-flash v4.2.0)}"
 TT_TOPOLOGY_REF="${TT_TOPOLOGY_REF:-$(manifest_ref tt-topology v1.2.20)}"
 TT_UMD_PINNED="${TT_UMD_PINNED:-0}"
 # pyluwen has no public git tag, so its source comes from the PyPI sdist (a version, not a ref)
