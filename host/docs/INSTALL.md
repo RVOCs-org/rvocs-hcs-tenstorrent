@@ -84,7 +84,13 @@ sudo ./uninstall.sh           # 卸载（--keep-kmd 保留驱动，--purge 连�
 | --- | --- |
 | `--check` | 只做前置检查（架构/发行版/内核头文件/wheelhouse） |
 | `--skip-kmd` / `--skip-tools` / `--skip-hugepages` | 跳过对应部分 |
+| `--skip-flash` | 跳过 n300 固件升级 |
 | `--yes` | 非交互（`.deb` 的 postinst 用的就是它） |
+
+安装末尾会读包内 `manifest.yaml` 的 `firmware.n300`（当前 `19.17.1`），用 `tt-smi -s` 的
+`board_info.board_type` 判断板卡；是 n300 时执行 `tt-flash flash -d 19.17.1` 更新固件。
+其他板卡、未安装工具或读不到板卡信息时跳过；刷写失败只告警，不会让安装失败。
+改固件版本只改 YAML；临时不刷写用 `--skip-flash`。
 
 ---
 
