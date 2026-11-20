@@ -90,7 +90,11 @@ log "wheelhouse backend: $BACKEND"
 # `apt-get update` stalls for ~17 minutes per image. Huawei Cloud is fast here
 # (same cloud as SWR); override with UBUNTU_APT_MIRROR=... and point pip at a
 # reachable index with PIP_INDEX_URL=...
-APT_MIRROR="${UBUNTU_APT_MIRROR:-http://repo.huaweicloud.com/ubuntu}"
+case "$(uname -m)" in
+  riscv64) _apt_default="http://repo.huaweicloud.com/ubuntu-ports" ;;
+  *)       _apt_default="http://repo.huaweicloud.com/ubuntu" ;;
+esac
+APT_MIRROR="${UBUNTU_APT_MIRROR:-$_apt_default}"
 PIP_INDEX="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 log "apt mirror: $APT_MIRROR   pip index: $PIP_INDEX"
 
