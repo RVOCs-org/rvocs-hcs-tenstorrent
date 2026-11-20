@@ -42,8 +42,10 @@ echo "== Devices =="
 cards=$(lspci -d 1e52: 2>/dev/null | wc -l)
 [ "$cards" -gt 0 ] && ok "$cards Tenstorrent device(s) detected" || warn "no Tenstorrent device detected (expected without cards)"
 if [ -d /dev/tenstorrent ] && [ -n "$(ls -A /dev/tenstorrent 2>/dev/null)" ]; then
-  ok "device nodes: $(ls /dev/tenstorrent | tr '\n' ' ')"
+  nodes="$(for n in /dev/tenstorrent/*; do [ -c "$n" ] && basename "$n"; done | tr '\n' ' ')"
+  ok "device nodes: $nodes"
   for n in /dev/tenstorrent/*; do
+    [ -c "$n" ] || continue          # skip by-id/ and other non-device entries
     m="$(stat -c '%a' "$n" 2>/dev/null || echo 000)"
     if [ "$m" = 666 ]; then ok "device node $(basename "$n") mode 0666 (unprivileged access)"
     else bad "device node $(basename "$n") mode $m, expected 0666"; fi

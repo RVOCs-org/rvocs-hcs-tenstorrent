@@ -162,6 +162,8 @@ install_udev() {
 
   if [ -d "$dev_dir" ] && compgen -G "$dev_dir/*" >/dev/null; then
     for n in "$dev_dir"/*; do
+      # by-id/ is a directory of symlinks; only the char devices matter here
+      [ -c "$n" ] || continue
       mode="$(stat -c '%a' "$n" 2>/dev/null || echo 000)"
       if [ "$mode" != 666 ]; then
         warn "device node $(basename "$n") is mode $mode, expected 666"
