@@ -12,11 +12,17 @@ ARCH="$(uname -m)"
 KV="$(uname -r)"
 DISTRO="$(. /etc/os-release; echo "${VERSION_ID:-unknown}")"
 TT_ROOT=/opt/tenstorrent
+# dpkg maintainer scripts run with a minimal PATH that usually lacks
+# /usr/local/bin, where the tool wrappers are installed; put it back so the
+# firmware step can find them.
+PATH="/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
+export PATH
+WARN_COUNT=0
 CHECK=0; SKIP_KMD=0; SKIP_TOOLS=0; SKIP_HP=0; SKIP_FLASH=0; ASSUME_YES=0
 APT_DISABLED="${APT_DISABLED:-0}"
 
 log()  { printf '\033[1;32m[%s]\033[0m %s\n' "$(date +%H:%M:%S)" "$*"; }
-warn() { printf '\033[1;33m[WARN]\033[0m %s\n' "$*" >&2; }
+warn() { WARN_COUNT=$((WARN_COUNT+1)); printf '\033[1;33m[WARN]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[ERROR]\033[0m %s\n' "$*" >&2; exit 1; }
 
 # Same check as packaging/verify.sh: read the whole lsmod stream (no grep -q,
@@ -222,11 +228,12 @@ flash_firmware() {
   fw="$(firmware_version)"
   [ -n "$fw" ] || { warn "manifest.yaml has no firmware.n300 version, skipping the firmware update"; return 0; }
 
-  if [ "$SKIP_TOOLS" = 1 ] || ! command -v tt-smi >/dev/null 2>&1; then
-    warn "tt-smi is not installed, cannot check the board type; skipping the firmware update"
+  local smi=/usr/local/bin/tt-smi flash=/usr/local/bin/tt-flash
+  if [ "$SKIP_TOOLS" = 1 ] || [ ! -x "$smi" ]; then
+    warn "tt-smi is not available at $smi; skipping the firmware update"
     return 0
   fi
-  types="$(tt-smi -s 2>/dev/null | sed -n 's/.*"board_type": "\([^"]*\)".*/\1/p' | sort -u | tr '\n' ' ')"
+  types="$("$smi" -s 2>/dev/null | sed -n 's/.*"board_type": "\([^"]*\)".*/\1/p' | sort -u | tr '\n' ' ')"
   if [ -z "$types" ]; then
     warn "tt-smi returned no board information; skipping the firmware update"
     return 0
@@ -241,10 +248,14 @@ flash_firmware() {
     log "  [dry-run] tt-flash flash -d $fw"
     return 0
   fi
-  if tt-flash flash -d "$fw"; then
+  if [ ! -x "$flash" ]; then
+    warn "tt-flash is not available at $flash; skipping the firmware update"
+    return 0
+  fi
+  if "$flash" flash -d "$fw"; then
     log "firmware updated to $fw"
   else
-    warn "tt-flash failed; the card keeps its current firmware (retry: sudo tt-flash flash -d $fw)"
+    warn "tt-flash failed; the card keeps its current firmware (retry: sudo $flash flash -d $fw)"
   fi
 }
 
@@ -284,3 +295,4 @@ log "install record: /etc/tenstorrent/install-manifest.yaml"
 
 log "running self-check ..."
 bash "$HERE/verify.sh" || warn "self-check reported failures (see above)"
+[ "$WARN_COUNT" = 0 ] || log "install warnings: $WARN_COUNT (the verify summary counts only its own checks)"
