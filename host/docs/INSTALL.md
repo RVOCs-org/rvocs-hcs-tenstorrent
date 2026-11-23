@@ -34,6 +34,12 @@ dpkg -V tt-deps                 # 文件完整性
 # 重跑安装步骤（例如只补工具）
 sudo /opt/tt-deps/install.sh --skip-kmd --skip-hugepages
 
+# 卸载后重装：uninstall.sh 只清系统状态，包仍登记在 dpkg 里，同版本 apt 会跳过
+sudo apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb
+./rvocs.sh --target tt-host --install            # 走 rvocs 也会强制重装
+sudo ./uninstall.sh --purge                      # 或先注销包，再普通 apt install
+sudo TT_DEPS_SKIP_FLASH=1 apt install ./rvocs-tt-deps_<version>_<arch>.deb   # 安装但不刷固件
+
 # 升级
 sudo apt install ./tt-deps_0.1.2_amd64.deb      # dpkg 会自动执行旧版 prerm → 新版 postinst
 
@@ -84,7 +90,7 @@ sudo ./uninstall.sh           # 卸载（--keep-kmd 保留驱动，--purge 连�
 | --- | --- |
 | `--check` | 只做前置检查（架构/发行版/内核头文件/wheelhouse） |
 | `--skip-kmd` / `--skip-tools` / `--skip-hugepages` | 跳过对应部分 |
-| `--skip-flash` | 跳过 n300 固件升级 |
+| `--skip-flash` | 跳过 n300 固件升级（apt 安装时可用 `TT_DEPS_SKIP_FLASH=1` 传给 postinst） |
 | `--yes` | 非交互（`.deb` 的 postinst 用的就是它） |
 
 安装末尾会读包内 `manifest.yaml` 的 `firmware.n300`（当前 `19.17.1`），用 `tt-smi -s` 的

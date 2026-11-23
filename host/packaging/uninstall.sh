@@ -48,3 +48,17 @@ udevadm control --reload-rules 2>/dev/null || true
 rm -rf /opt/tenstorrent
 [ "$PURGE" = 1 ] && rm -rf /etc/tenstorrent
 log "done (hugepage values stay in the kernel but are no longer configured at boot)"
+
+# The payload was installed by dpkg, so the package stays registered unless it
+# is removed. `apt install ./same-version.deb` then reports "already the newest
+# version" and does nothing. --purge unregisters it (only when run by the user,
+# never from prerm, which sets DPKG_MAINTSCRIPT_PACKAGE).
+if [ "$PURGE" = 1 ] && [ -z "${DPKG_MAINTSCRIPT_PACKAGE:-}" ] && command -v dpkg >/dev/null 2>&1; then
+  log "removing the dpkg registration (dpkg -r tt-deps)"
+  dpkg -r tt-deps || log "dpkg -r tt-deps failed; remove it manually if needed"
+else
+  log "note: the tt-deps package is still registered; reinstall with one of:"
+  log "  sudo apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb"
+  log "  ./rvocs.sh --target tt-host --install          (forces a reinstall)"
+  log "  sudo ./uninstall.sh --purge && sudo apt install ./rvocs-tt-deps_<version>_<arch>.deb"
+fi

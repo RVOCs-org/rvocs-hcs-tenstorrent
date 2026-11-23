@@ -3,7 +3,10 @@
 set -e
 
 echo "[tt-deps] starting the installation (driver / tools / 1G hugepages / udev) ..."
-if ! /opt/tt-deps/install.sh --yes --no-apt; then
+# Set TT_DEPS_SKIP_FLASH=1 to install/upgrade without touching the card firmware.
+INSTALL_ARGS="--yes --no-apt"
+[ "${TT_DEPS_SKIP_FLASH:-0}" = 1 ] && INSTALL_ARGS="$INSTALL_ARGS --skip-flash"
+if ! /opt/tt-deps/install.sh $INSTALL_ARGS; then
     echo "[tt-deps] the installer failed; run /opt/tt-deps/verify.sh for details" >&2
     exit 1
 fi
