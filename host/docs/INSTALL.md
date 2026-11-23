@@ -14,40 +14,68 @@
 
 ## 方式 A：`.deb`（apt / dpkg）
 
+### 安装 / 升级
+
 ```bash
-# 安装（apt 会自动装 dkms/build-essential/python3-venv/zstd/systemd 等依赖）
-sudo apt install ./tt-deps_0.1.1_amd64.deb
+# 全新安装（apt 会自动装 dkms/build-essential/python3-venv/zstd/systemd 等依赖）
+sudo apt install ./rvocs-tt-deps_<version>_<arch>.deb
+
+# 升级：版本号不同时，dpkg 自动执行旧版 prerm → 新版 postinst
+sudo apt install ./rvocs-tt-deps_<new-version>_<arch>.deb
 
 # 或先 dpkg 再补依赖
-sudo dpkg -i tt-deps_0.1.1_amd64.deb && sudo apt -f install
+sudo dpkg -i rvocs-tt-deps_<version>_<arch>.deb && sudo apt -f install
 ```
 
 安装过程中：`postinst` 调用 `/opt/tt-deps/install.sh --yes`；**失败会让 dpkg 报错**（不会静默成功）。
+安装/重装默认对 n300 刷 `manifest.yaml` 的 `firmware.n300`（当前 `19.17.1`）；
+不想刷用 `sudo TT_DEPS_SKIP_FLASH=1 apt install ...`。
+
+### 重装同版本
+
+`uninstall.sh` 只清系统状态（驱动、工具、大页单元、udev 规则），包仍登记在 dpkg 里；
+同版本 `sudo apt install ./x.deb` 会提示 “already the newest version” 并跳过 postinst。三种做法任选：
 
 ```bash
-# 查看
+# 1) 强制重装（推荐）
+sudo apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb
+
+# 2) 走编排层（检测到同版本已安装时会自动 --reinstall）
+../rvocs-main/rvocs.sh --target tt-host --arch x86 --install
+
+# 3) 先注销包，再普通安装
+sudo /opt/tt-deps/uninstall.sh --purge
+sudo apt install ./rvocs-tt-deps_<version>_<arch>.deb
+```
+
+### 卸载
+
+```bash
+# 只卸系统状态，保留 dpkg 注册与 /opt/tt-deps
+sudo /opt/tt-deps/uninstall.sh
+sudo /opt/tt-deps/uninstall.sh --keep-kmd      # 保留内核驱动
+
+# 彻底卸载：--purge 会 dpkg -r（/opt/tt-deps 随包删除），并清 /etc/tenstorrent
+sudo /opt/tt-deps/uninstall.sh --purge
+# 或者直接走 apt（prerm 会调用 uninstall.sh）
+sudo apt purge tt-deps
+```
+
+`uninstall.sh --purge` 在用户直接执行时会附带 `dpkg -r tt-deps`（从 prerm 调用时不会递归）。
+卸载后大页的**内核值**仍保留，但不再开机配置。
+
+### 查看与重跑安装步骤
+
+```bash
 dpkg -l tt-deps                 # 版本/状态
 dpkg -s tt-deps                 # 依赖等元数据
 dpkg -L tt-deps | head          # 包内文件（都在 /opt/tt-deps）
 dpkg -V tt-deps                 # 文件完整性
 
-# 重跑安装步骤（例如只补工具）
+# 只补工具 / 只重配大页 / 只跑自检
 sudo /opt/tt-deps/install.sh --skip-kmd --skip-hugepages
-
-# 卸载后重装：uninstall.sh 只清系统状态，包仍登记在 dpkg 里，同版本 apt 会跳过
-sudo apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb
-./rvocs.sh --target tt-host --install            # 走 rvocs 也会强制重装
-sudo ./uninstall.sh --purge                      # 或先注销包，再普通 apt install
-sudo TT_DEPS_SKIP_FLASH=1 apt install ./rvocs-tt-deps_<version>_<arch>.deb   # 安装但不刷固件
-
-# 升级
-sudo apt install ./tt-deps_0.1.2_amd64.deb      # dpkg 会自动执行旧版 prerm → 新版 postinst
-
-# 卸载（prerm 会调用 uninstall.sh：卸驱动、删 /usr/local/bin/tt-*、停大页单元、删 udev 规则）
-sudo apt remove tt-deps
-
-# 彻底卸载（含 /etc/tenstorrent 配置）
-sudo apt purge tt-deps
+sudo /opt/tt-deps/install.sh --skip-kmd --skip-tools
+sudo /opt/tt-deps/verify.sh
 ```
 
 **注意**
@@ -75,14 +103,17 @@ sudo apt update && sudo apt install tt-deps
 ## 方式 B：`.tar.zst`（离线自包含）
 
 ```bash
-tar -xf tt-deps-0.1.1-x86_64.tar.zst
-cd tt-deps-0.1.1-x86_64
+tar --zstd -xf rvocs-tt-deps_<version>_<arch>.tar.zst
+cd rvocs-tt-deps_<version>_<arch>
 
 sudo ./install.sh --check     # 只看前置条件，不改系统
 sudo ./install.sh             # 驱动 + 工具 + 大页 + udev
 ./verify.sh                   # 自检（无卡机器上设备项为 WARN）
 sudo ./uninstall.sh           # 卸载（--keep-kmd 保留驱动，--purge 连配置一起删）
 ```
+
+`uninstall.sh --purge` 只清本目录安装的系统状态；如果之前用 `.deb` 安装，包仍登记在 dpkg，
+按「方式 A → 重装同版本 / 卸载」处理。
 
 `install.sh` 可选参数：
 
@@ -136,4 +167,4 @@ sudo ./uninstall.sh           # 卸载（--keep-kmd 保留驱动，--purge 连�
 | `/dev/tenstorrent` 为空 | `lspci -d 1e52:` 确认设备；驱动未绑定时重插/重启 |
 | 工具与系统旧版冲突 | 本包 `Conflicts` 已声明 apt 同名包；手工安装的旧版请手动移除 |
 | 大页数量少于期望 | 内存不足或碎片；`cat /proc/meminfo \| grep Huge`，或用 override 指定更小值 |
-| 想刷固件 | `sudo tt-flash --fw <bundle> <dev>`；**固件需与镜像内 tt-metal 版本匹配**，本包默认不刷 |
+| 固件升级 | 安装/重装时检测到 n300 会自动执行 `tt-flash flash -d <firmware.n300>`（当前 `19.17.1`）；`--skip-flash` / `TT_DEPS_SKIP_FLASH=1` 可跳过；失败只告警，可手动重试 |

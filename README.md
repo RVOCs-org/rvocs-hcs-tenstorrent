@@ -37,6 +37,32 @@ RVOCs 的 **Tenstorrent 厂商仓库**（`rvocs-hcs-{vendor}` 命名）。单分
 宿主机 `.deb` 包通过 `--download` / `--install` 获取（资产发布在 GitHub Releases）；
 镜像发布在华为云 SWR（`swr.cn-east-3.myhuaweicloud.com/cloud-mdgx/`）。
 
+## 安装、重装与卸载
+
+```bash
+# 安装 / 升级：新版本号不同时，dpkg 自动执行旧版 prerm → 新版 postinst
+sudo apt install ./rvocs-tt-deps_<version>_<arch>.deb
+../rvocs-main/rvocs.sh --target tt-host --arch x86 --install
+
+# 重装同版本（uninstall.sh 之后，或想重跑 postinst）
+sudo apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb
+../rvocs-main/rvocs.sh --target tt-host --arch x86 --install
+
+# 只卸系统状态：驱动/工具/大页/udev；保留 dpkg 注册与 /opt/tt-deps
+sudo /opt/tt-deps/uninstall.sh
+
+# 彻底卸载：--purge 额外清 /etc/tenstorrent，并 dpkg -r（/opt/tt-deps 随包删除）
+sudo /opt/tt-deps/uninstall.sh --purge
+# 或者直接走 apt
+sudo apt purge tt-deps
+```
+
+- `uninstall.sh` 不清 `/opt/tt-deps`；`--purge` 之后普通 `apt install ./xxx.deb` 可直接重装，
+  未 purge 时同版本必须用 `--reinstall`（否则 apt 提示 “already the newest version”）。
+- 安装/重装默认对 n300 刷 `firmware.n300`（当前 `19.17.1`）；不刷固件用 `install.sh --skip-flash`，
+  `apt install` 时用 `TT_DEPS_SKIP_FLASH=1`。
+- 产物命名、dpkg 状态与常见问题见 [`host/docs/INSTALL.md`](host/docs/INSTALL.md)。
+
 ## 基线切换
 
 各部分的 `manifest.yaml` 是唯一 pin 输入：

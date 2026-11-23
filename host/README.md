@@ -6,7 +6,7 @@ Tenstorrent 宿主机依赖环境的**一键构建 + 单一交付包**：内核�
 支持 **riscv64** 与 **x86_64**，x86 覆盖 Ubuntu 22.04 / 24.04 / 26.04。
 
 产物命名：`rvocs-tt-deps_<version>_<debarch>.tar.zst` / `.deb`
-（如 `rvocs-tt-deps_v0.1.0_riscv64.deb`），`<version>` 来自仓库根的 `VERSION`。
+（如 `rvocs-tt-deps_0.1.0_riscv64.deb`；`VERSION` 的 `v` 前缀会去掉，Debian 版本号需以数字开头）。
 `.deb` 通过 `./rvocs.sh --target tt-host --arch <arch> --download` 获取（资产发布在 GitHub Releases）。
 
 > 推理镜像在同仓库的 [`../stack/`](../stack/)，本部分只负责宿主机。
@@ -17,7 +17,7 @@ Tenstorrent 宿主机依赖环境的**一键构建 + 单一交付包**：内核�
 - **补丁入库**：`patches/{common,<arch>}/<组件>/series`，`patch` 阶段单独应用（与 fetch 解耦）；
 - **产物不入库**：`dist/` 只放交付物（`work/`、`dist/` 均已 gitignore）。
 
-## 用户：安装
+## 用户：安装、重装与卸载
 
 推荐用编排层（自动从 Releases 下载最新 `.deb` 并安装）：
 
@@ -25,17 +25,43 @@ Tenstorrent 宿主机依赖环境的**一键构建 + 单一交付包**：内核�
 ../rvocs-main/rvocs.sh --target tt-host --arch riscv --install
 ```
 
-或手动（tar.zst 交付包）：
+或手动安装 `.deb` / `.tar.zst`：
 
 ```bash
-tar --zstd -xf rvocs-tt-deps_v0.1.0_riscv64.tar.zst && cd rvocs-tt-deps_v0.1.0_riscv64
+# .deb：全新安装或升级（版本不同时 dpkg 自动执行 prerm → postinst）
+sudo apt install ./rvocs-tt-deps_<version>_<arch>.deb
+
+# .tar.zst：解包后用 install.sh
+tar --zstd -xf rvocs-tt-deps_<version>_<arch>.tar.zst
+cd rvocs-tt-deps_<version>_<arch>
 sudo ./install.sh --check      # 前置检查
 sudo ./install.sh              # 驱动(DKMS/预编译) + 工具 + 1G大页 + udev
 ./verify.sh                    # 自检（无卡机器上设备项为 WARN）
-sudo ./uninstall.sh            # 卸载（--keep-kmd / --purge）
 ```
 
-`.deb` 也可以直接 `apt-get install ./rvocs-tt-deps_v0.1.0_riscv64.deb`，与 tar 包安装的系统状态一致。
+重装同版本（`uninstall.sh` 之后，或想重跑 postinst）：
+
+```bash
+sudo apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb
+../rvocs-main/rvocs.sh --target tt-host --arch riscv --install   # 编排层也会强制重装
+sudo TT_DEPS_SKIP_FLASH=1 apt install --reinstall ./rvocs-tt-deps_<version>_<arch>.deb   # 不刷固件
+```
+
+卸载：
+
+```bash
+sudo /opt/tt-deps/uninstall.sh              # 只卸系统状态，保留 dpkg 注册与 /opt/tt-deps
+sudo /opt/tt-deps/uninstall.sh --keep-kmd   # 保留内核驱动
+
+sudo /opt/tt-deps/uninstall.sh --purge      # 彻底卸载：/etc/tenstorrent + dpkg -r（/opt/tt-deps 删除）
+sudo apt purge tt-deps                      # 或直接走 apt 彻底卸载
+```
+
+`uninstall.sh` 不清 `/opt/tt-deps`；`--purge` 之后普通 `apt install ./xxx.deb` 可直接重装，
+未 purge 时同版本必须用 `--reinstall`（否则 apt 提示 “already the newest version”）。
+
+安装/重装默认对 n300 刷 `manifest.yaml` 的 `firmware.n300`（当前 `19.17.1`）；
+不刷固件用 `install.sh --skip-flash`，`apt install` 时用 `TT_DEPS_SKIP_FLASH=1`。
 
 安装后：
 
